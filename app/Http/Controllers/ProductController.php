@@ -11,13 +11,14 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::all();
+
         foreach ($products as $product) {
             $product->image = asset('storage/' . $product->image);
         }
 
         return response()->json([
             'status' => true,
-            'products' => Product::all()
+            'products' => $products
         ]);
     }
 
@@ -29,7 +30,7 @@ class ProductController extends Controller
 
         return response()->json([
             'status' => true,
-            'product' => Product::findOrFail($id)
+            'product' => $product
         ]);
     }
 
@@ -37,6 +38,10 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $data = Product::where('name', 'like', '%' . $request->q . '%')->get();
+
+        foreach ($data as $product) {
+            $product->image = asset('storage/' . $product->image);
+        }
 
         return response()->json([
             'status' => true,
