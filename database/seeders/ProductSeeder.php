@@ -9,13 +9,17 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // Produk kotak (square)
+        // =========================
+        // ONE PIECE PRODUCTS
+        // =========================
+
         Product::create([
-            'name' => "Gojo Satoru - Nendoroid",
-            'description' => "Figure Gojo skala kecil",
+            'name' => "Luffy - Nendoroid",
+            'description' => "Figure Luffy skala kecil",
             'price' => 500000,
             'stock' => 20,
-            'image' => "products/Onepiece/OnePiece-Figure-01.jpg",
+            'folder' => "onepiece",
+            'image_key' => "luffy",
             'image_type' => 'square',
             'aspect_ratio' => '1:1'
         ]);
@@ -25,29 +29,53 @@ class ProductSeeder extends Seeder
             'description' => "Figure Nami edisi spesial",
             'price' => 350000,
             'stock' => 15,
-            'image' => "products/Onepiece/OnePiece-Figure-02.jpg",
+            'folder' => "onepiece",
+            'image_key' => "nami",
             'image_type' => 'square',
             'aspect_ratio' => '1:1'
         ]);
 
-        // Banner wide (trending)
+        // =========================
+        // JJK PRODUCTS
+        // =========================
+
         Product::create([
-            'name' => "One Piece Banner 01",
-            'description' => "Banner konten trending",
+            'name' => "Gojo Satoru - Nendoroid",
+            'description' => "Figure Gojo skala kecil",
+            'price' => 600000,
+            'stock' => 18,
+            'folder' => "jjk",
+            'image_key' => "gojo",
+            'image_type' => 'square',
+            'aspect_ratio' => '1:1'
+        ]);
+
+        // =========================
+        // BANNER (WIDE)
+        // =========================
+
+        Product::create([
+            'name' => "Gojo Anime Banner",
+            'description' => "Banner Gojo JJK",
             'price' => null,
             'stock' => 0,
-            'image' => "products/Onepiece/OnePiece-Banner-01.jpg",
+            'folder' => "jjk",
+            'image_key' => "banner",
             'image_type' => 'wide',
             'aspect_ratio' => '16:9'
         ]);
 
-        // Promo unik (contoh Luffy 50%)
+        // =========================
+        // PROMO
+        // =========================
+
         Product::create([
             'name' => "Luffy Promo 50%",
             'description' => "Promo spesial karakter Luffy",
             'price' => null,
             'stock' => 0,
-            'image' => "products/Onepiece/OnePiece-Promo-01.jpg",
+            'folder' => "onepiece",
+            'image_key' => "promo",
             'image_type' => 'promo',
             'aspect_ratio' => '16:9'
         ]);

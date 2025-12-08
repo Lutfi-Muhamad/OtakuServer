@@ -11,4 +11,15 @@ class Product extends Model
     {
         return $this->hasMany(Cart::class);
     }
+
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'stock',
+        'folder',
+        'image_key',
+        'image_type',
+        'aspect_ratio'
+    ];
 }
