@@ -7,54 +7,84 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    // TAMBAH KE CART
-    public function store(Request $request)
+    // ============================
+    // GET CART USER
+    // ============================
+    public function index()
     {
-        // ✅ AMBIL USER LANGSUNG DARI REQUEST (SANCTUM)
-        $user = $request->user();
+        $carts = Cart::with('product')
+            ->where('user_id', auth()->id())
+            ->get();
 
-        if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'User belum login'
-            ], 401);
-        }
+        $carts->map(function ($cart) {
+
+            $folder = $cart->product->folder;
+            $key = $cart->product->image_key;
+
+            // ✅ Generate 1 gambar utama untuk cart
+            $cart->product->image = asset("storage/products/$folder/{$key}-01.jpg");
 
 
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1'
-        ]);
 
-        Cart::create([
-            'user_id' => $user->id,         
-            'product_id' => $request->product_id,
-            'qty' => $request->qty
-        ]);
+            return $cart;
+        });
 
         return response()->json([
             'status' => true,
-            'message' => 'Produk ditambahkan ke cart'
+            'carts' => $carts
         ]);
     }
 
-    // LIHAT CART
-    public function index(Request $request)
+    // ============================
+    // ADD TO CART
+    // ============================
+    public function store(Request $request)
     {
-        $user = $request->user();
+        $cart = Cart::where('user_id', auth()->id())
+            ->where('product_id', $request->product_id)
+            ->first();
 
-        if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized'
-            ], 401);
+        if ($cart) {
+            $cart->increment('qty');
+        } else {
+            Cart::create([
+                'user_id' => auth()->id(),
+                'product_id' => $request->product_id,
+                'qty' => $request->qty ?? 1
+            ]);
         }
 
         return response()->json([
             'status' => true,
-            'cart' => Cart::with('product')
-                ->where('user_id', $user->id)
-                ->get()
+            'message' => 'Produk berhasil ditambahkan ke cart'
+        ]);
+    }
+
+    // ============================
+    // UPDATE QTY
+    // ============================
+    public function update(Request $request, $id)
+    {
+        $cart = Cart::findOrFail($id);
+        $cart->qty = $request->qty;
+        $cart->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Qty berhasil diupdate'
+        ]);
+    }
+
+    // ============================
+    // DELETE CART
+    // ============================
+    public function destroy($id)
+    {
+        Cart::destroy($id);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Cart berhasil dihapus'
         ]);
     }
 }

@@ -19,7 +19,7 @@ class ProductSeeder extends Seeder
             'price' => 500000,
             'stock' => 20,
             'folder' => "onepiece",
-            'image_key' => "luffy",
+            'image_key' => "Luffy-Figure",
             'image_type' => 'square',
             'aspect_ratio' => '1:1'
         ]);
@@ -30,7 +30,7 @@ class ProductSeeder extends Seeder
             'price' => 350000,
             'stock' => 15,
             'folder' => "onepiece",
-            'image_key' => "nami",
+            'image_key' => "Nami-Figure",
             'image_type' => 'square',
             'aspect_ratio' => '1:1'
         ]);
@@ -45,7 +45,7 @@ class ProductSeeder extends Seeder
             'price' => 600000,
             'stock' => 18,
             'folder' => "jjk",
-            'image_key' => "gojo",
+            'image_key' => "gojo-figure",
             'image_type' => 'square',
             'aspect_ratio' => '1:1'
         ]);
