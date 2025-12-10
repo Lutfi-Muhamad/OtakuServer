@@ -38,7 +38,8 @@ class UserController extends Controller
             $filename = $baseName . '-' . time() . '.' . $request->photo->extension();
 
             // simpan file
-            $request->photo->storeAs('public/user', $filename);
+            $request->photo->storeAs('user', $filename, 'public');
+
 
             $user->photo = $filename;
         }
@@ -57,6 +58,29 @@ class UserController extends Controller
                 'photo'   => $user->photo
                     ? asset('storage/user/' . $user->photo)
                     : null,
+            ]
+        ]);
+    }
+
+    // SHOW PROFILE
+
+    public function showProfile(Request $request)
+    {
+        $user = $request->user(); // auth()->user()
+
+        return response()->json([
+            'status' => true,
+            'user' => [
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'bio'       => $user->bio,
+                'address'   => $user->address,
+                'photo'     => $user->photo
+                    ? asset('storage/user/' . $user->photo)
+                    : null,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
             ]
         ]);
     }

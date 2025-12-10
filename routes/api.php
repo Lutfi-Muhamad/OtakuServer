@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // USER
     Route::get('/user', fn(Request $request) => $request->user());
+    Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'showProfile']);
     Route::post('/user/update', [UserController::class, 'updateProfile']);
 
     // CART
