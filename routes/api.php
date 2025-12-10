@@ -1,38 +1,47 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 
-// =======================
-// AUTH (PUBLIC)
-// =======================
+/*
+|--------------------------------------------------------------------------
+| PUBLIC AUTH
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// =======================
-// PRODUK (PUBLIC)
-// =======================
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PRODUCTS
+|--------------------------------------------------------------------------
+*/
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/search', [ProductController::class, 'search']);
 
-// =======================
-// PROTECTED (SANCTUM)
-// =======================
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATED (SANCTUM)
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/cart', [CartController::class, 'store']);
+
+    // USER
+    Route::get('/user', fn(Request $request) => $request->user());
+    Route::post('/user/update', [UserController::class, 'updateProfile']);
+
+    // CART
     Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 
-
+    // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-        return $request->user();
-    });
-    Route::post('/user/update', [UserController::class, 'updateProfile']);
 });
