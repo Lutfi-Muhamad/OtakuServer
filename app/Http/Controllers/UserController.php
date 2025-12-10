@@ -1,33 +1,63 @@
 <?php
+
+namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 
-public function updateProfile(Request $request)
+class UserController extends Controller
 {
-$user = auth()->user();
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user(); // auth()->user()
 
-if ($request->hasFile('photo')) {
-$baseName = strtolower(str_replace(' ', '-', $user->name));
-$existing = User::where('photo', 'like', "$baseName-%")->count() + 1;
+        // VALIDASI INPUT
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'bio' => 'nullable|string|max:500',
+            'address' => 'nullable|string|max:500',
+            'photo' => 'nullable|image|max:2048',
+        ]);
 
-$filename = $baseName . '-' . $existing . '.' . $request->photo->extension();
+        // UPDATE FIELD DASAR
+        $user->name = $request->name;
+        $user->bio = $request->bio;
+        $user->address = $request->address;
 
-$path = $request->photo->storeAs(
-'public/user',
-$filename
-);
+        // HANDLE FOTO UPLOAD
+        if ($request->hasFile('photo')) {
 
-$user->photo = $filename;
-}
+            // DELETE OLD PHOTO IF EXISTS
+            if ($user->photo && Storage::exists('public/user/' . $user->photo)) {
+                Storage::delete('public/user/' . $user->photo);
+            }
 
-$user->bio = $request->bio;
-$user->address = $request->address;
-$user->save();
+            // GENERATE FILE NAME
+            $baseName = strtolower(str_replace(' ', '-', $user->name));
+            $filename = $baseName . '-' . time() . '.' . $request->photo->extension();
 
-return response()->json([
-'status' => true,
-'message' => 'Profil berhasil diperbarui',
-'user' => $user
-]);
+            // simpan file
+            $request->photo->storeAs('public/user', $filename);
+
+            $user->photo = $filename;
+        }
+
+        // SIMPAN KE DATABASE
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profil berhasil diperbarui',
+            'user' => [
+                'id'      => $user->id,
+                'name'    => $user->name,
+                'bio'     => $user->bio,
+                'address' => $user->address,
+                'photo'   => $user->photo
+                    ? asset('storage/user/' . $user->photo)
+                    : null,
+            ]
+        ]);
+    }
 }
