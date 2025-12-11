@@ -76,12 +76,12 @@ class UserController extends Controller
                 'email'     => $user->email,
                 'bio'       => $user->bio,
                 'address'   => $user->address,
-                'photo'     => $user->photo
-                    ? asset('storage/user/' . $user->photo)
-                    : null,
+                'photo'     => $user->photo,
+                'toko'     => $user->store_id,
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
             ]
         ]);
     }
+    
 }

@@ -6,7 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\StoreController;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC AUTH
@@ -42,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
+    // STORE
+    Route::post('/store/register', [StoreController::class, 'registerStore']);
+    Route::get('/store/me', [StoreController::class, 'myStore']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);

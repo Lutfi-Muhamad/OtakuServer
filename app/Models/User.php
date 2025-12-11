@@ -24,7 +24,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'store_id',   // ← WAJIB TAMBAHKAN INI
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -53,5 +55,10 @@ class User extends Authenticatable
     public function carts()
     {
         return $this->hasMany(Cart::class);
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id');
     }
 }
