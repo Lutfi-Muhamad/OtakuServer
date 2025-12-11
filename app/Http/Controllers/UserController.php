@@ -77,7 +77,7 @@ class UserController extends Controller
                 'bio'       => $user->bio,
                 'address'   => $user->address,
                 'photo'     => $user->photo,
-                'toko'     => $user->store_id,
+                'store_id'     => $user->store_id,
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
             ]

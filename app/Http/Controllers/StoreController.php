@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Store;
 
+
 class StoreController extends Controller
 {
     public function registerStore(Request $request)
@@ -17,7 +18,8 @@ class StoreController extends Controller
             'address' => 'required|string',
         ]);
 
-        $user = Auth::user(); // ← PASTIKAN INI MODEL
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
         // Cek apakah user sudah punya store
         if ($user->store_id) {
