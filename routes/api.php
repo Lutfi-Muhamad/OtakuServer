@@ -33,7 +33,6 @@ Route::get('/search', [ProductController::class, 'search']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // USER
-    Route::get('/user', fn(Request $request) => $request->user());
     Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'showProfile']);
     Route::post('/user/update', [UserController::class, 'updateProfile']);
 
@@ -45,8 +44,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // STORE
     Route::post('/store/register', [StoreController::class, 'registerStore']);
-    Route::get('/store/me', [StoreController::class, 'myStore']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 });

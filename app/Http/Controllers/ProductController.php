@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
     // =========================
-    // AMBIL SEMUA GAMBAR PRODUK
+    // GET IMAGES PRODUCT
     // =========================
     private function getProductImages($product)
     {
@@ -22,7 +22,6 @@ class ProductController extends Controller
             foreach ($files as $file) {
                 $filename = strtolower($file->getFilename());
 
-                // Cocokkan berdasarkan image_key
                 if (str_contains($filename, strtolower($product->image_key))) {
                     $images[] = asset("storage/products/{$product->folder}/" . $file->getFilename());
                 }
@@ -32,9 +31,9 @@ class ProductController extends Controller
         return $images;
     }
 
-    // =================
-    // LIST PRODUK
-    // =================
+    // =========================
+    // LIST PRODUCT
+    // =========================
     public function index()
     {
         $products = Product::all();
@@ -49,9 +48,9 @@ class ProductController extends Controller
         ]);
     }
 
-    // =================
-    // DETAIL PRODUK
-    // =================
+    // =========================
+    // PRODUCT DETAIL
+    // =========================
     public function show($id)
     {
         $product = Product::findOrFail($id);
@@ -63,9 +62,9 @@ class ProductController extends Controller
         ]);
     }
 
-    // =================
-    // SEARCH PRODUK
-    // =================
+    // =========================
+    // SEARCH
+    // =========================
     public function search(Request $request)
     {
         $data = Product::where('name', 'like', '%' . $request->q . '%')->get();
@@ -77,6 +76,158 @@ class ProductController extends Controller
         return response()->json([
             'status' => true,
             'products' => $data
+        ]);
+    }
+
+    // =========================
+    // STORE PRODUCT
+    // =========================
+    public function store(Request $request)
+    {
+        $request->validate([
+            "name" => "required|string",
+            "description" => "required|string",
+            "price" => "required|numeric",
+            "stock" => "required|numeric",
+            "folder" => "required|string",
+            "images.*" => "image|mimes:jpg,jpeg,png|max:5120",
+        ]);
+
+        $user = $request->user();
+        $store = $user->store;
+
+        if (!$store) {
+            return response()->json([
+                "status" => false,
+                "message" => "User does not have a store."
+            ], 403);
+        }
+
+        $cleanName = preg_replace(
+            '/[^a-z0-9\-]+/',
+            '',
+            str_replace(' ', '-', strtolower($request->name))
+        );
+        $cleanName = preg_replace('/-+/', '-', $cleanName);
+        $imageKey = trim($cleanName, '-');
+
+        $product = Product::create([
+            "name" => $request->name,
+            "description" => $request->description,
+            "price" => $request->price,
+            "stock" => $request->stock,
+            "image_type" => "square",
+            "aspect_ratio" => "1:1",
+            "folder" => strtolower($request->folder),
+            "image_key" => $imageKey,
+            "toko_id" => $store->id
+        ]);
+
+        // =========================
+        // UPLOAD IMAGES
+        // =========================
+        if ($request->hasFile("images")) {
+            $i = 1;
+
+            foreach ($request->file("images") as $img) {
+                $filename = $imageKey . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $img->getClientOriginalExtension();
+
+                $img->storeAs(
+                    "public/products/" . strtolower($request->folder),
+                    $filename
+                );
+
+                $i++;
+            }
+        }
+
+        return response()->json([
+            "status" => true,
+            "message" => "Product created successfully.",
+            "product" => $product
+        ]);
+    }
+
+    // =========================
+    // UPDATE PRODUCT
+    // =========================
+    public function update(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+
+        $request->validate([
+            "name" => "string",
+            "description" => "string",
+            "price" => "numeric",
+            "stock" => "numeric",
+            "folder" => "string",
+            "images.*" => "image|mimes:jpg,jpeg,png|max:5120",
+        ]);
+
+        // Update data produk
+        $product->update($request->only([
+            "name",
+            "description",
+            "price",
+            "stock",
+            "folder"
+        ]));
+
+        // Jika ganti folder → hapus semua gambar lama
+        if ($request->folder) {
+            $oldFolder = storage_path("app/public/products/" . $product->folder);
+            if (File::exists($oldFolder)) {
+                File::deleteDirectory($oldFolder);
+            }
+        }
+
+        // =========================
+        // Upload gambar baru
+        // =========================
+        if ($request->hasFile("images")) {
+            $cleanName = str_replace(" ", "-", strtolower($product->name));
+            $product->image_key = $cleanName;
+            $product->save();
+
+            $i = 1;
+
+            foreach ($request->file("images") as $img) {
+                $filename = $cleanName . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $img->getClientOriginalExtension();
+
+                $img->storeAs(
+                    "public/products/" . strtolower($product->folder),
+                    $filename
+                );
+
+                $i++;
+            }
+        }
+
+        return response()->json([
+            "status" => true,
+            "message" => "Product updated successfully.",
+            "product" => $product
+        ]);
+    }
+
+    // =========================
+    // DELETE PRODUCT
+    // =========================
+    public function destroy($id)
+    {
+        $product = Product::findOrFail($id);
+
+        $folderPath = storage_path("app/public/products/{$product->folder}");
+
+        if (File::exists($folderPath)) {
+            File::deleteDirectory($folderPath);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Product deleted successfully."
         ]);
     }
 }

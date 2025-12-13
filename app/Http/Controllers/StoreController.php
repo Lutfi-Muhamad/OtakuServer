@@ -26,8 +26,9 @@ class StoreController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Kamu tidak bisa memiliki lebih dari 1 toko.'
-            ], 400);
+            ], 409);
         }
+
 
         // Buat toko
         $store = Store::create([
@@ -46,6 +47,6 @@ class StoreController extends Controller
             'status' => true,
             'message' => 'Toko berhasil didaftarkan!',
             'store' => $store
-        ]);
+        ], 201);
     }
 }
