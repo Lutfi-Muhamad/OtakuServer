@@ -21,6 +21,6 @@ class Product extends Model
         'image_key',
         'image_type',
         'aspect_ratio',
-        'toko_id'
+        'store_id'
     ];
 }
