@@ -20,6 +20,7 @@ class Product extends Model
         'folder',
         'image_key',
         'image_type',
-        'aspect_ratio'
+        'aspect_ratio',
+        'toko_id'
     ];
 }
