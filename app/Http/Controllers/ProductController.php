@@ -132,25 +132,28 @@ class ProductController extends Controller
         // =========================
         if ($request->hasFile('images')) {
             $files = $request->file('images');
+
+            // pastikan $files selalu array
             $files = is_array($files) ? $files : [$files];
 
-            Log::info('📥 RECEIVED IMAGES COUNT: ' . count($files));
+            $storagePath = storage_path("app/public/products/" . strtolower($request->folder));
+            if (!File::exists($storagePath)) {
+                File::makeDirectory($storagePath, 0755, true);
+            }
 
             $i = 1;
             foreach ($files as $file) {
-                $ext = $file->getClientOriginalExtension();
-                $filename = $imageKey . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $ext;
+                $filename = $imageKey . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $file->getClientOriginalExtension();
+                Log::info('📂 SAVING TO: ' . $storagePath . '/' . $filename);
 
-                Log::info('📥 FILE NAME: ' . $file->getClientOriginalName());
-                Log::info('📂 WILL BE SAVED TO: ' . $storagePath . '/' . $filename);
-
-                // simpan file
-                $file->move($storagePath, $filename);
+                $file->move($storagePath, $filename);  // <- pakai move
                 $i++;
             }
         } else {
             Log::info('📥 NO FILES RECEIVED');
         }
+
+
 
         return response()->json([
             "status" => true,
