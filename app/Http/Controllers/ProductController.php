@@ -120,7 +120,7 @@ class ProductController extends Controller
             "aspect_ratio" => "1:1",
             "folder" => strtolower($request->folder),
             "image_key" => $imageKey,
-            "toko_id" => $store->id
+            "store_id" => $store->id
         ]);
 
         // =========================
@@ -209,6 +209,22 @@ class ProductController extends Controller
             "product" => $product
         ]);
     }
+
+    // AMBIL PRODUK BERDASARKAN TOKO
+    public function byStore($storeId)
+    {
+        $products = Product::where('store_id', $storeId)->get();
+
+        foreach ($products as $product) {
+            $product->images = $this->getProductImages($product);
+        }
+
+        return response()->json([
+            'status' => true,
+            'products' => $products
+        ]);
+    }
+
 
     // =========================
     // DELETE PRODUCT

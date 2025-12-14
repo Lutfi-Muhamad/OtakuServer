@@ -25,6 +25,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/search', [ProductController::class, 'search']);
 
+
 /*
 |--------------------------------------------------------------------------
 | AUTHENTICATED (SANCTUM)
@@ -44,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // STORE
     Route::post('/store/register', [StoreController::class, 'registerStore']);
+    Route::get('/store/{storeId}/products', [ProductController::class, 'byStore']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);
