@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -103,13 +104,16 @@ class ProductController extends Controller
             ], 403);
         }
 
-        $cleanName = preg_replace(
-            '/[^a-z0-9\-]+/',
-            '',
-            str_replace(' ', '-', strtolower($request->name))
-        );
+        $cleanName = preg_replace('/[^a-z0-9\-]+/', '', str_replace(' ', '-', strtolower($request->name)));
         $cleanName = preg_replace('/-+/', '-', $cleanName);
         $imageKey = trim($cleanName, '-');
+        $folder = strtolower($request->folder);
+
+        // buat folder jika belum ada
+        $storagePath = storage_path("app/public/products/{$folder}");
+        if (!File::exists($storagePath)) {
+            File::makeDirectory($storagePath, 0755, true);
+        }
 
         $product = Product::create([
             "name" => $request->name,
@@ -118,27 +122,34 @@ class ProductController extends Controller
             "stock" => $request->stock,
             "image_type" => "square",
             "aspect_ratio" => "1:1",
-            "folder" => strtolower($request->folder),
+            "folder" => $folder,
             "image_key" => $imageKey,
             "store_id" => $store->id
         ]);
 
         // =========================
-        // UPLOAD IMAGES
+        // UPLOAD IMAGES DENGAN DEBUG
         // =========================
-        if ($request->hasFile("images")) {
+        if ($request->hasFile('images')) {
+            $files = $request->file('images');
+            $files = is_array($files) ? $files : [$files];
+
+            Log::info('📥 RECEIVED IMAGES COUNT: ' . count($files));
+
             $i = 1;
+            foreach ($files as $file) {
+                $ext = $file->getClientOriginalExtension();
+                $filename = $imageKey . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $ext;
 
-            foreach ($request->file("images") as $img) {
-                $filename = $imageKey . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $img->getClientOriginalExtension();
+                Log::info('📥 FILE NAME: ' . $file->getClientOriginalName());
+                Log::info('📂 WILL BE SAVED TO: ' . $storagePath . '/' . $filename);
 
-                $img->storeAs(
-                    "public/products/" . strtolower($request->folder),
-                    $filename
-                );
-
+                // simpan file
+                $file->move($storagePath, $filename);
                 $i++;
             }
+        } else {
+            Log::info('📥 NO FILES RECEIVED');
         }
 
         return response()->json([
@@ -147,6 +158,7 @@ class ProductController extends Controller
             "product" => $product
         ]);
     }
+
 
     // =========================
     // UPDATE PRODUCT
