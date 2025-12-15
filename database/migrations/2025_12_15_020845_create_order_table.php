@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('carts', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')
@@ -16,24 +16,27 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->foreignId('store_id')
-                ->constrained('stores')
-                ->cascadeOnDelete();
-
-            $table->foreignId('product_id')
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->integer('qty');
+            $table->integer('total_price');
+
+            $table->enum('status', [
+                'pending',
+                'paid',
+                'shipped',
+                'completed',
+                'cancelled'
+            ])->default('pending');
 
             $table->timestamps();
 
-            // satu produk per user
-            $table->unique(['user_id', 'product_id']);
+            $table->index(['store_id', 'created_at']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('carts');
+        Schema::dropIfExists('orders');
     }
 };
