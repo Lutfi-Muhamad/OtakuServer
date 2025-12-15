@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
 
 class ProductController extends Controller
 {
@@ -246,19 +249,46 @@ class ProductController extends Controller
     // =========================
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
+        Log::info('🧨 DELETE REQUEST', [
+            'product_id' => $id,
+            'user_id' => Auth::id(),
+        ]);
 
+        $user = Auth::user();
+        $store = $user->store;
+
+        if (!$store) {
+            Log::warning('❌ USER HAS NO STORE');
+            return response()->json(['message' => 'User has no store'], 403);
+        }
+
+        $product = Product::where('id', $id)
+            ->where('store_id', $store->id)
+            ->first();
+
+        if (!$product) {
+            Log::warning('❌ PRODUCT NOT FOUND OR NOT OWNED', [
+                'store_id' => $store->id,
+            ]);
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        // hapus folder gambar (opsional tapi rapi)
         $folderPath = storage_path("app/public/products/{$product->folder}");
-
         if (File::exists($folderPath)) {
             File::deleteDirectory($folderPath);
+            Log::info('🗑️ PRODUCT IMAGES DELETED', ['path' => $folderPath]);
         }
 
         $product->delete();
 
+        Log::info('✅ PRODUCT DELETED', [
+            'product_id' => $id,
+        ]);
+
         return response()->json([
-            "status" => true,
-            "message" => "Product deleted successfully."
+            'status' => true,
+            'message' => 'Product deleted'
         ]);
     }
 }
