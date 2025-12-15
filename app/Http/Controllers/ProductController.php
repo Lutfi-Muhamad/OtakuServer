@@ -249,13 +249,14 @@ class ProductController extends Controller
     // =========================
     public function destroy($id)
     {
-        Log::info('🧨 DELETE REQUEST', [
-            'product_id' => $id,
-            'user_id' => Auth::id(),
-        ]);
-
         $user = Auth::user();
         $store = $user->store;
+
+        Log::info('🧨 DELETE REQUEST', [
+            'product_id' => $id,
+            'user_id' => $user?->id,
+            'store_id' => $store?->id,
+        ]);
 
         if (!$store) {
             Log::warning('❌ USER HAS NO STORE');
@@ -273,13 +274,25 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        // hapus folder gambar (opsional tapi rapi)
+        // hapus gambar produk spesifik (tidak seluruh folder)
         $folderPath = storage_path("app/public/products/{$product->folder}");
+
         if (File::exists($folderPath)) {
-            File::deleteDirectory($folderPath);
-            Log::info('🗑️ PRODUCT IMAGES DELETED', ['path' => $folderPath]);
+            $files = File::files($folderPath);
+
+            foreach ($files as $file) {
+                if (str_contains(strtolower($file->getFilename()), strtolower($product->image_key))) {
+                    File::delete($file);
+                }
+            }
+
+            Log::info('🗑️ PRODUCT IMAGES DELETED', [
+                'product_id' => $product->id,
+                'folder' => $folderPath,
+            ]);
         }
 
+        // hapus produk dari database
         $product->delete();
 
         Log::info('✅ PRODUCT DELETED', [
