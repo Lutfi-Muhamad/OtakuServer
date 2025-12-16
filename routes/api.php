@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\ReportController;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC AUTH
@@ -47,6 +48,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/store/register', [StoreController::class, 'registerStore']);
     Route::get('/store/{storeId}/products', [ProductController::class, 'byStore']);
     Route::put('/store/{storeId}/products/{product}', [ProductController::class, 'editProduk']);
+
+    // Analisis
+    Route::get('/store/{storeId}/reports/total-sales', [ReportController::class, 'totalSales']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);
