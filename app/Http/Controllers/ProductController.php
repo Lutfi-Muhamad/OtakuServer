@@ -90,6 +90,7 @@ class ProductController extends Controller
     {
         $request->validate([
             "name" => "required|string",
+            "category" => "required|string",
             "description" => "required|string",
             "price" => "required|numeric",
             "stock" => "required|numeric",
@@ -120,6 +121,7 @@ class ProductController extends Controller
 
         $product = Product::create([
             "name" => $request->name,
+            "category" => $request->category,
             "description" => $request->description,
             "price" => $request->price,
             "stock" => $request->stock,
@@ -176,7 +178,7 @@ class ProductController extends Controller
         logger('📦 productId = ' . $productId);
         logger('📥 payload', $request->all());
 
-        $user = auth()->user();
+        $user = Auth::user();
         $store = $user->store; // 🔥 BENAR
 
         // 1️⃣ Validasi user punya store
@@ -209,6 +211,7 @@ class ProductController extends Controller
         $product->update([
             'name'        => $request->name,
             'price'       => $request->price,
+            'category' => $request->category,
             'description' => $request->description,
         ]);
 
