@@ -46,11 +46,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // STORE
     Route::post('/store/register', [StoreController::class, 'registerStore']);
     Route::get('/store/{storeId}/products', [ProductController::class, 'byStore']);
+    Route::put('/store/{storeId}/products/{product}', [ProductController::class, 'editProduk']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::post('/products', [ProductController::class, 'store']);
-    Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 });

@@ -167,64 +167,56 @@ class ProductController extends Controller
 
 
     // =========================
-    // UPDATE PRODUCT
+    // EDIT PRODUCT (SELLER)
     // =========================
-    public function update(Request $request, $id)
+    public function editProduk(Request $request, $storeId, $productId)
     {
-        $product = Product::findOrFail($id);
+        logger('🟨 [EDIT PRODUK API]');
+        logger('🏪 storeId = ' . $storeId);
+        logger('📦 productId = ' . $productId);
+        logger('📥 payload', $request->all());
 
-        $request->validate([
-            "name" => "string",
-            "description" => "string",
-            "price" => "numeric",
-            "stock" => "numeric",
-            "folder" => "string",
-            "images.*" => "image|mimes:jpg,jpeg,png|max:5120",
+        $user = auth()->user();
+        $store = $user->store; // 🔥 BENAR
+
+        // 1️⃣ Validasi user punya store
+        if (!$store) {
+            logger('❌ USER HAS NO STORE');
+            return response()->json(['message' => 'User has no store'], 403);
+        }
+
+        // 2️⃣ Validasi store ID
+        if ($store->id != $storeId) {
+            logger('❌ STORE ID MISMATCH', [
+                'user_store_id' => $store->id,
+                'request_store_id' => $storeId,
+            ]);
+
+            return response()->json(['message' => 'Unauthorized store'], 403);
+        }
+
+        // 3️⃣ Ambil produk milik store
+        $product = Product::where('id', $productId)
+            ->where('store_id', $storeId)
+            ->first();
+
+        if (!$product) {
+            logger('❌ PRODUCT NOT FOUND');
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        // 4️⃣ Update produk
+        $product->update([
+            'name'        => $request->name,
+            'price'       => $request->price,
+            'description' => $request->description,
         ]);
 
-        // Update data produk
-        $product->update($request->only([
-            "name",
-            "description",
-            "price",
-            "stock",
-            "folder"
-        ]));
-
-        // Jika ganti folder → hapus semua gambar lama
-        if ($request->folder) {
-            $oldFolder = storage_path("app/public/products/" . $product->folder);
-            if (File::exists($oldFolder)) {
-                File::deleteDirectory($oldFolder);
-            }
-        }
-
-        // =========================
-        // Upload gambar baru
-        // =========================
-        if ($request->hasFile("images")) {
-            $cleanName = str_replace(" ", "-", strtolower($product->name));
-            $product->image_key = $cleanName;
-            $product->save();
-
-            $i = 1;
-
-            foreach ($request->file("images") as $img) {
-                $filename = $cleanName . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $img->getClientOriginalExtension();
-
-                $img->storeAs(
-                    "public/products/" . strtolower($product->folder),
-                    $filename
-                );
-
-                $i++;
-            }
-        }
+        logger('✅ PRODUCT UPDATED');
 
         return response()->json([
-            "status" => true,
-            "message" => "Product updated successfully.",
-            "product" => $product
+            'message' => 'Product updated',
+            'product' => $product,
         ]);
     }
 
