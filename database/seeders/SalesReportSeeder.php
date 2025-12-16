@@ -10,21 +10,19 @@ class SalesReportSeeder extends Seeder
 {
     public function run(): void
     {
-        // toko dummy
         $stores = [1];
 
-        // ambil semua produk
         $products = Product::all();
+
+        $categories = ['nendroid', 'bags', 'figure'];
 
         foreach ($stores as $storeId) {
             foreach ($products as $product) {
 
-                // skip produk tanpa harga (misal banner / promo)
                 if (is_null($product->price)) {
                     continue;
                 }
 
-                // dummy data random tapi masuk akal
                 $totalSold = rand(10, 150);
                 $totalRevenue = $totalSold * $product->price;
 
@@ -32,6 +30,7 @@ class SalesReportSeeder extends Seeder
                     'store_id'      => $storeId,
                     'product_id'    => $product->id,
                     'product_name'  => $product->name,
+                    'category'      => $categories[array_rand($categories)],
                     'series'        => $product->folder, // onepiece, jjk, dll
                     'total_sold'    => $totalSold,
                     'total_revenue' => $totalRevenue,

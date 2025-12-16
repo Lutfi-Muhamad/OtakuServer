@@ -50,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/store/{storeId}/products/{product}', [ProductController::class, 'editProduk']);
 
     // Analisis
-    Route::get('/store/{storeId}/reports/total-sales', [ReportController::class, 'totalSales']);
+    Route::get('/store/{storeId}/reports/sales', [ReportController::class, 'sales']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);

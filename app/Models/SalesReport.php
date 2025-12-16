@@ -15,6 +15,7 @@ class SalesReport extends Model
         'store_id',
         'product_id',
         'product_name',
+        'category',
         'series',
         'total_sold',
         'total_revenue',
