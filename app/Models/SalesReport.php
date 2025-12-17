@@ -19,5 +19,6 @@ class SalesReport extends Model
         'series',
         'total_sold',
         'total_revenue',
+        'sold_at',
     ];
 }
