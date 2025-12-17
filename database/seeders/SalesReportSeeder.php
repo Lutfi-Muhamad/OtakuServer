@@ -5,25 +5,40 @@ namespace Database\Seeders;
 use App\Models\Product;
 use App\Models\SalesReport;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class SalesReportSeeder extends Seeder
 {
     public function run(): void
     {
-        $stores = [1];
+        $storeId = 1;
 
-        $products = Product::all();
+        $products = Product::whereNotNull('price')->get();
 
         $categories = ['nendroid', 'bags', 'figure'];
 
-        foreach ($stores as $storeId) {
-            foreach ($products as $product) {
+        foreach ($products as $product) {
 
-                if (is_null($product->price)) {
-                    continue;
+            // jumlah transaksi per produk
+            $transactions = rand(5, 15);
+
+            for ($i = 0; $i < $transactions; $i++) {
+
+                // tentukan rentang waktu
+                $period = rand(1, 3);
+
+                if ($period === 1) {
+                    // minggu ini
+                    $soldAt = Carbon::now()->subDays(rand(0, 6));
+                } elseif ($period === 2) {
+                    // 1 bulan lalu
+                    $soldAt = Carbon::now()->subMonth()->addDays(rand(0, 27));
+                } else {
+                    // 2 bulan lalu
+                    $soldAt = Carbon::now()->subMonths(2)->addDays(rand(0, 27));
                 }
 
-                $totalSold = rand(10, 150);
+                $totalSold = rand(1, 10);
                 $totalRevenue = $totalSold * $product->price;
 
                 SalesReport::create([
@@ -31,9 +46,10 @@ class SalesReportSeeder extends Seeder
                     'product_id'    => $product->id,
                     'product_name'  => $product->name,
                     'category'      => $categories[array_rand($categories)],
-                    'series'        => $product->folder, // onepiece, jjk, dll
+                    'series'        => $product->folder,
                     'total_sold'    => $totalSold,
                     'total_revenue' => $totalRevenue,
+                    'sold_at'       => $soldAt,
                 ]);
             }
         }

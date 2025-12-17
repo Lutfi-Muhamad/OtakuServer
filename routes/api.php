@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Analisis
     Route::get('/store/{storeId}/reports/sales', [ReportController::class, 'sales']);
+    Route::get('/store/{storeId}/reports/product-sales', [ReportController::class, 'productSales']);
 
     // AUTH
     Route::post('/logout', [AuthController::class, 'logout']);
