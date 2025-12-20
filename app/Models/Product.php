@@ -11,7 +11,8 @@ class Product extends Model
     {
         return $this->hasMany(Cart::class);
     }
-
+    public function store(){return $this->belongsTo(\App\Models\Store::class, 'store_id');}
+    
     protected $fillable = [
         'name',
         'category',

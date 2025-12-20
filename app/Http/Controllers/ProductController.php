@@ -40,7 +40,8 @@ class ProductController extends Controller
     // =========================
     public function index()
     {
-        $products = Product::all();
+        // 🔥 FIX 1: Hapus baris Product::all() yang menimpa with('store')
+        $products = Product::with('store')->get(); 
 
         foreach ($products as $product) {
             $product->images = $this->getProductImages($product);
@@ -57,7 +58,8 @@ class ProductController extends Controller
     // =========================
     public function show($id)
     {
-        $product = Product::findOrFail($id);
+        // 🔥 FIX 2: Tambahkan with('store') agar detail toko muncul di halaman detail
+        $product = Product::with('store')->findOrFail($id);
         $product->images = $this->getProductImages($product);
 
         return response()->json([
@@ -71,7 +73,10 @@ class ProductController extends Controller
     // =========================
     public function search(Request $request)
     {
-        $data = Product::where('name', 'like', '%' . $request->q . '%')->get();
+        // 🔥 FIX 3: Tambahkan with('store') agar hasil search ada nama tokonya
+        $data = Product::with('store')
+            ->where('name', 'like', '%' . $request->q . '%')
+            ->get();
 
         foreach ($data as $product) {
             $product->images = $this->getProductImages($product);
@@ -133,12 +138,10 @@ class ProductController extends Controller
         ]);
 
         // =========================
-        // UPLOAD IMAGES DENGAN DEBUG
+        // UPLOAD IMAGES
         // =========================
         if ($request->hasFile('images')) {
             $files = $request->file('images');
-
-            // pastikan $files selalu array
             $files = is_array($files) ? $files : [$files];
 
             $storagePath = storage_path("app/public/products/" . strtolower($request->folder));
@@ -151,14 +154,12 @@ class ProductController extends Controller
                 $filename = $imageKey . "-" . str_pad($i, 2, "0", STR_PAD_LEFT) . "." . $file->getClientOriginalExtension();
                 Log::info('📂 SAVING TO: ' . $storagePath . '/' . $filename);
 
-                $file->move($storagePath, $filename);  // <- pakai move
+                $file->move($storagePath, $filename);
                 $i++;
             }
         } else {
             Log::info('📥 NO FILES RECEIVED');
         }
-
-
 
         return response()->json([
             "status" => true,
@@ -179,25 +180,21 @@ class ProductController extends Controller
         logger('📥 payload', $request->all());
 
         $user = Auth::user();
-        $store = $user->store; // 🔥 BENAR
+        $store = $user->store;
 
-        // 1️⃣ Validasi user punya store
         if (!$store) {
             logger('❌ USER HAS NO STORE');
             return response()->json(['message' => 'User has no store'], 403);
         }
 
-        // 2️⃣ Validasi store ID
         if ($store->id != $storeId) {
             logger('❌ STORE ID MISMATCH', [
                 'user_store_id' => $store->id,
                 'request_store_id' => $storeId,
             ]);
-
             return response()->json(['message' => 'Unauthorized store'], 403);
         }
 
-        // 3️⃣ Ambil produk milik store
         $product = Product::where('id', $productId)
             ->where('store_id', $storeId)
             ->first();
@@ -211,8 +208,9 @@ class ProductController extends Controller
         $product->update([
             'name'        => $request->name,
             'price'       => $request->price,
-            'category' => $request->category,
+            'category'    => $request->category,
             'description' => $request->description,
+            'stock'       => $request->stock, // 🔥 FIX 4: Tambahkan update stock
         ]);
 
         logger('✅ PRODUCT UPDATED');
@@ -226,7 +224,8 @@ class ProductController extends Controller
     // AMBIL PRODUK BERDASARKAN TOKO
     public function byStore($storeId)
     {
-        $products = Product::where('store_id', $storeId)->get();
+        // Opsional: Tambahkan with('store') disini juga biar konsisten
+        $products = Product::with('store')->where('store_id', $storeId)->get();
 
         foreach ($products as $product) {
             $product->images = $this->getProductImages($product);
@@ -269,7 +268,6 @@ class ProductController extends Controller
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        // hapus gambar produk spesifik (tidak seluruh folder)
         $folderPath = storage_path("app/public/products/{$product->folder}");
 
         if (File::exists($folderPath)) {
@@ -287,7 +285,6 @@ class ProductController extends Controller
             ]);
         }
 
-        // hapus produk dari database
         $product->delete();
 
         Log::info('✅ PRODUCT DELETED', [

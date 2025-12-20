@@ -136,85 +136,87 @@ class CartController extends Controller
     {
         $user = Auth::user();
 
-        Log::info('🧾 CHECKOUT START', [
-            'user_id' => $user->id,
-        ]);
+        Log::info('🧾 CHECKOUT START', ['user_id' => $user->id]);
 
         $carts = Cart::with('product')
             ->where('user_id', $user->id)
             ->get();
 
         if ($carts->isEmpty()) {
-            return response()->json([
-                'message' => 'Cart kosong'
-            ], 400);
+            return response()->json(['message' => 'Cart kosong'], 400);
         }
 
         DB::beginTransaction();
 
         try {
-            foreach ($carts as $cart) {
-                $product = $cart->product; // ← INI YANG KURANG
+            // 1. Kelompokkan Cart berdasarkan Toko (Store)
+            // Agar 1 Order = 1 Toko (opsional, tapi best practice marketplace)
+            $cartsByStore = $carts->groupBy('store_id');
 
-                // DEBUG
-                Log::info('📦 CHECK PRODUCT', [
-                    'product_id' => $product->id,
-                    'stock' => $product->stock,
-                    'qty' => $cart->qty,
+            foreach ($cartsByStore as $storeId => $storeCarts) {
+                
+                // Hitung total harga per toko
+                $totalPrice = $storeCarts->sum(function($cart) {
+                    return $cart->product->price * $cart->qty;
+                });
+
+                // A. Buat Order Baru
+                $order = Order::create([
+                    'user_id' => $user->id,
+                    'store_id' => $storeId,
+                    'total_price' => $totalPrice,
+                    'status' => 'pending', // Default status
+                    'created_at' => Carbon::now(),
                 ]);
 
-                // ❌ CEK STOK
-                if ($product->stock < $cart->qty) {
-                    throw new \Exception(
-                        "Stok {$product->name} tidak cukup"
-                    );
+                foreach ($storeCarts as $cart) {
+                    $product = $cart->product;
+
+                    // B. Cek Stok
+                    if ($product->stock < $cart->qty) {
+                        throw new \Exception("Stok {$product->name} tidak cukup");
+                    }
+
+                    // C. Kurangi Stok
+                    $product->decrement('stock', $cart->qty);
+
+                    // D. Simpan Order Item
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $product->id,
+                        'store_id' => $storeId,
+                        'product_name' => $product->name,
+                        'product_price' => $product->price,
+                        'qty' => $cart->qty,
+                        'subtotal' => $product->price * $cart->qty,
+                    ]);
+
+                    // E. Sales Report (Analitik)
+                    SalesReport::create([
+                        'store_id'       => $product->store_id,
+                        'product_id'     => $product->id,
+                        'product_name'   => $product->name,
+                        'category'       => $product->category,
+                        'series'         => $product->folder, 
+                        'total_sold'     => $cart->qty,
+                        'total_revenue'  => $cart->qty * $product->price,
+                        'sold_at'        => Carbon::now(),
+                    ]);
                 }
-
-                // ✅ KURANGI STOK
-                $product->decrement('stock', $cart->qty);
-
-                // ✅ SALES REPORT
-                SalesReport::create([
-                    'store_id'       => $product->store_id,
-                    'product_id'     => $product->id,
-                    'product_name'   => $product->name,
-                    'category'       => $product->category,
-                   'series'         => $product->folder, 
-                    'total_sold'     => $cart->qty,
-                    'total_revenue'  => $cart->qty * $product->price,
-                    'sold_at'        => Carbon::now(),
-                ]);
-
-                Log::info('✅ SOLD', [
-                    'product_id' => $product->id,
-                    'sold' => $cart->qty,
-                    'revenue' => $cart->qty * $product->price,
-                ]);
             }
 
-
-            // 🧹 HAPUS CART
+            // 🧹 Hapus Cart setelah sukses semua
             Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
+            Log::info('🎉 CHECKOUT SUCCESS');
 
-            Log::info('🎉 CHECKOUT SUCCESS', [
-                'user_id' => $user->id,
-            ]);
+            return response()->json(['message' => 'Checkout sukses']);
 
-            return response()->json([
-                'message' => 'Checkout sukses'
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Log::error('❌ CHECKOUT FAILED', [
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
+            Log::error('❌ CHECKOUT FAILED', ['error' => $e->getMessage()]);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 }

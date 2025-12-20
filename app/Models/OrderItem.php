@@ -12,10 +12,9 @@ class OrderItem extends Model
         'order_id',
         'product_id',
         'product_name',
-        'category',
-        'series',
-        'quantity',
-        'price',
+        'product_price',
+        'qty',
+        'subtotal',
         'store_id',
     ];
 }
